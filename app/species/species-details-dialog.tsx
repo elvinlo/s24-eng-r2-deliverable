@@ -18,6 +18,9 @@ import { type BaseSyntheticEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { toast } from "@/components/ui/use-toast";
+import { createBrowserSupabaseClient } from "@/lib/client-utils";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Species = Database["public"]["Tables"]["species"]["Row"];
@@ -56,8 +59,10 @@ type FormData = z.infer<typeof speciesSchema>;
 
 /* I did something with displaying the form wrong somewhere in workshop 1, it is probably in page.tsx? */
 
-export default function SpeciesDetailsDialog({ species }: { species: Species }) {
-  const [open, setOpen] = useState<boolean>(false);
+export default function SpeciesDetailsDialog({ species, currentUser }: { species: Species; currentUser: string }) {
+  const router = useRouter();
+
+  // const [open, setOpen] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState(false);
 
   // Default values for the form fields.
@@ -77,8 +82,29 @@ export default function SpeciesDetailsDialog({ species }: { species: Species }) 
     mode: "onChange",
   });
 
-  const onSubmit = (input: FormData) => {
-    console.log(input);
+  const onSubmit = async (input: FormData) => {
+    const supabase = createBrowserSupabaseClient();
+
+    const { error } = await supabase.from("species").update(input).eq("id", species.id);
+
+    if (error) {
+      return toast({
+        title: "Something went wrong.",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    setIsEditing(false);
+
+    form.reset(input);
+
+    router.refresh();
+
+    return toast({
+      title: "Changes saved!",
+      description: "Saved your changes to " + input.scientific_name + ".",
+    });
   };
 
   const startEditing = (e: MouseEvent) => {
@@ -223,22 +249,24 @@ export default function SpeciesDetailsDialog({ species }: { species: Species }) 
                   );
                 }}
               />
-              <div className="flex">
-                {isEditing ? (
-                  <>
-                    <Button type="submit" className="ml-1 mr-1 flex-auto">
-                      Confirm
+              {species.author === currentUser && (
+                <div className="flex">
+                  {isEditing ? (
+                    <>
+                      <Button type="submit" className="ml-1 mr-1 flex-auto">
+                        Confirm
+                      </Button>
+                      <Button onClick={handleCancel} type="button" className="ml-1 mr-1 flex-auto" variant="secondary">
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button onClick={startEditing} type="button" className="ml-1 mr-1 flex-auto">
+                      Edit species
                     </Button>
-                    <Button onClick={handleCancel} type="button" className="ml-1 mr-1 flex-auto" variant="secondary">
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={startEditing} type="button" className="ml-1 mr-1 flex-auto">
-                    Edit species
-                  </Button>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
         </Form>
