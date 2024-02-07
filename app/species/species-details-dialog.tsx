@@ -120,7 +120,7 @@ export default function SpeciesDetailsDialog({ species, currentUser }: { species
     }
 
     form.reset(defaultValues);
-    setIsEditing(false);
+    void setIsEditing(false);
   };
 
   const onDelete = async (input: FormData) => {
