@@ -59,7 +59,8 @@ type FormData = z.infer<typeof speciesSchema>;
 
 /* I did something with displaying the form wrong somewhere in workshop 1, it is probably in page.tsx? */
 
-export default function SpeciesDetailsDialog({ species, currentUser }: { species: Species; currentUser: string }) {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export default function SpeciesDetailsDialog({ species, currentUser }: { species: Species; currentUser: String }) {
   const router = useRouter();
 
   // const [open, setOpen] = useState<boolean>(false);
